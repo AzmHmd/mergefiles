@@ -1,0 +1,399 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Please note that whilst this template provides a 
+% preview of the typeset manuscript for submission, it 
+% will not necessarily be the final publication layout.
+%
+% letterpaper/a4paper: US/UK paper size toggle
+% num-refs/alpha-refs: numeric/author-year citation and bibliography toggle
+
+%\documentclass[letterpaper]{oup-contemporary}
+\documentclass[a4paper,num-refs]{oup-contemporary}
+
+%%% Journal toggle; only specific options recognised.
+%%% (Only "gigascience" and "general" are implemented now. Support for other journals is planned.)
+\journal{gigascience}
+
+\usepackage{graphicx}
+\usepackage{siunitx}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{xcolor,colortbl}
+\definecolor{Gray}{gray}{0.85}
+\usepackage{multirow}
+\usepackage{subcaption}
+\usepackage{xcolor}
+
+%%% Flushend: You can add this package to automatically balance the final page, but if things go awry (e.g. section contents appearing out-of-order or entire blocks or paragraphs are coloured), remove it!
+% \usepackage{flushend}
+
+\title{DeepPod: A Convolutional Neural Network Based Quantification of Fruit Number  in \textit{Arabidopsis}}
+
+%%% Use the \authfn to add symbols for additional footnotes, if any. 1 is reserved for correspondence emails; then continuing with 2 etc for contributions.
+\author[1,\authfn{1},\authfn{2}]{Azam Hamidinekoo}
+\author[2,\authfn{1},\authfn{2}]{Gina A. Garzón-Martínez}
+\author[1]{Morteza Ghahremani}
+\author[2]{Fiona M. K. Corke}
+\author[1]{Reyer Zwiggelaar}
+\author[2]{John H Doonan}
+\author[1,\authfn{1},\authfn{3}]{Chuan Lu}
+
+\affil[1]{Department of Computer Science, Aberystwyth University, Aberystwyth, United Kingdom}
+\affil[2]{National Plant Phenomics Centre, Institute of Biological, Environmental and Rural Sciences, Aberystwyth University, Aberystwyth, United Kingdom}
+
+%%% Author Notes
+\authnote{\authfn{1}azh2@aber.ac.uk; gig7@aber.ac.uk; cul@aber.ac.uk}
+\authnote{\authfn{2}Contributed equally.}
+\authnote{\authfn{3}Corresponding author.}
+
+%%% Paper category
+\papercat{Paper}
+
+%%% "Short" author for running page header
+\runningauthor{Hamidinekoo et al.}
+
+%%% Should only be set by an editor
+\jvolume{00}
+\jnumber{0}
+\jyear{2019}
+
+\begin{document}
+
+\begin{frontmatter}
+\maketitle
+\begin{abstract}
+High-throughput phenotyping based on non destructive imaging has become a popular approach with great potential in plant biology and breeding programs. However, efficient future extraction and quatification from image data remains a bottleneck that needs to be addressed. Research on the model plant \textit{Arabidopsis thaliana} and related crops in the Brassica family has the potential to generate extensive datasets containing much trait information related to growth rate and fitness. In spite of that, little has been done on fruit production of large populations of \textit{Arabidopsis}. The detection and segmentation of individual fruits, also called siliques or pods, from images is a challenging task. In this work, we used deep learning to train a model for classifying different parts of the plant inflorescence, such as tip, base and body of the siliques and also the stem inflorescence. Subsequently, in a post processing step, classified parts of the same silique were associated together in order to detect and count that silique as a unique object. Comparisons of the CNN results with manual scoring showed the desired capability of methods for estimating silique number. Prediction of overlapped borders was also possible and further improved the segmentation of individual siliques. The software package is released as an open-access toolbox, with the goal of promoting the use of deep learning within the plant research community.
+\end{abstract}
+
+\begin{keywords}
+Plant phenotyping; fitness; image analysis; deep learning; classification
+\end{keywords}
+\end{frontmatter}
+
+%%% Key points will be printed at top of second page
+%\begin{keypoints*}
+%\begin{itemize}
+%\item This is the first point
+%\item This is the second point
+%\item One last point.
+%\end{itemize}
+%\end{keypoints*}
+%*****************************************************
+\section{Background}
+
+Photometrics (imaging following by computationally assisted feature extraction and measurement) promises to revolutionise biological research and agricultural production systems \cite{chen2014dissecting,vasseur2018image,furbank2011phenomics, pauli2016field, shakoor2017high}. Automation of workflows remains a key challenge in the scaling of these approaches to cope with the requirements of large genetic experiments or, indeed, production systems. Phenotyping aims to measure observable plant features, often as a response of environmental cues and/or variability between individuals.  Traditionally, phenotyping has been a labour-intensive and costly process, usually manual and often destructive. High-throughput phenotyping technologies aim to address this problem by the use of non-destructive approaches  in glasshouses \cite{chen2014dissecting, camargo2016determining, vasseur2018image} or directly in the field \cite{pauli2016field, liebisch2015remote} integrating imaging, robotics, spectroscopy, high tech sensors and high-performance computing \cite{singh2016machine,furbank2011phenomics}.
+
+Model organisms provides a useful means to understand different biological processes. \textit{Arabidopsis thaliana} is a small, flowering plant widely used to address questions related to plant genetics, molecular, evolution, ecology, physiology, among others \cite{mitchell2001arabidopsis, koornneef2010development, kramer2015planting}. The seedling produces a small rosette that increases in size by addition of leaves. The central meristem produce an inflorescence that emerges and produces flowers and then fruits. The fruits area also known as pods or siliques \cite{kramer2015planting}. Due to its small size, self mating system and high genetic diversity, large populations of this plant can be used to understand adaptation and performance under different environments. The measurement of traits, such as growth rate, flowering and reproductive fitness are key to evaluate plant performance \cite{reboud2004natural}. 
+
+ Imaging has the potential to generate an enormous volume of data in real time, while image analysis to extract useful information remains the main bottleneck. The extraction of quantitative traits relies on the development and use of improved software techniques. Machine learning tools have been used to identify patterns in large biological datasets \cite{singh2016machine, pape2015utilizing, naik2017real,atkinson2017combining, arinkin2014phenotyping}. Many high-throughput imaging studies focus on growth dynamics of \textit{Arabidopsis} rosette \cite{bac2015genome, bac2016genome, pape2015utilizing, minervini2014image},  despite the importance of fruit production in reproductive and evolutionary processes \cite{vasseur2018image,augustin2016framework,bush2015rna,zheng2014cdkg1}. 
+ 
+ Lately, deep learning tools have provided a more accurate analyses for plants \cite{pound2016deep, mohanty2016using, ubbens2018use, namin2017deep, ubbens2017deep, pawara2017comparing, fuentes2017robust, wang2017automatic, ramcharan2017transfer}. 
+Deep Convolutional Neural Networks (CNNs) are the most successful type of deep learning approaches, particularly well-suited for supervised learning problems. A CNN can be trained by feeding it with a suitable input, i.e. typically this input can be a raw RGB image, treated as an height$\times$width$\times$channels volume input.  CNNs are composed of several layers, stacked on top of each other, possessing width, height and depth, which makes them more controllable by various depths and breaths and optimised sharing of weights \cite{simonyan2014very}. The CNN is able to compute parameters from each layer and  produce the desired output. CNNs actively learn a variety of filter parameters during training. The objective of training is to minimise the loss function as defined by the difference between the predicted output and the actual output of the network. This loss then flows backwards through the designed structure by a back-propagation procedure and updates the parameter values. What makes CNNs   particularly effective is that they can directly extract features from images without the need for time-consuming, hand-crafted pre-processing or feature extraction steps, unlike classical machine learning approaches~\cite{krizhevsky2009learning}.
+
+Recent publications have reported the advantages of deep learning in various plant phenotyping tasks such as leaf counting, age estimation, mutant classification, disease detection, fruit classification and plant organ localisation\cite{mohanty2016using,wang2017automatic,fuentes2017robust,ramcharan2017transfer,pawara2017comparing,namin2017deep,ubbens2018use,pound2016deep}. 
+Mohanty \textit{et al.} \cite{mohanty2016using} trained deep convolutional neural networks  to identify 14 crop species and 26 diseases in the publicly available PlantVillage dataset \footnote{\url{https://plantvillage.org/posts/7127}}. In their experiments, they used AlexNet \cite{krizhevsky2012imagenet} and GoogleNet \cite{szegedy2015going} models with transfer learning and tested various experimental configurations with regard to the architecture, training mechanism, dataset type, training and testing distributions. They concluded that the coloured versions of datasets using end-to-end supervised training using deep convolutional neural networks is a promising solution for computational inference of plant diseases. Wang \textit{et al.} \cite{wang2017automatic} employed CNNs to establish disease severity in apple black rot images. They compared several deep learning based architectures and suggested the use of fine tuned deep models to achieve the best performance. Deep learning meta-architectures have also been considered for more complex scenarios. Fuentes \textit{et al.} \cite{fuentes2017robust} demonstrated a combination of CNNs and deep feature extractors to recognise different diseases and pests in tomatoes, which dealt with inter- and intra-class variations. Deep learning was also used for cassava disease detection via mobile devices \cite{ramcharan2017transfer}. Pawara \textit{et al.} \cite{pawara2017comparing} applied CNNs to classify leaf, fruits and flowers in field images. They compared the performance of classical classifiers to CNNs, where architectures such as GoogleNet and AlexNet gave the best results in the plant-related datasets used. Taghavi \textit{et al.} \cite{namin2017deep}  proposed a CNN-LSTM framework for plant classification. They used deep CNNs for joint feature and classifier learning, within an automatic phenotyping scheme for genotype classification. The plant growth variation over time was fed into the deep learning framework using LSTMs\footnote{Long Short Term Memories} to model these temporal cues for different plant accessions. Generating a replicated dataset of four accessions of \textit{Arabidopsis}, they undertook automated phenotyping experiments and, concluded that a CNN-LSTM framework, incorporating temporal information, improved the performance of the phenotype classification system. Ubbens \textit{et al.}~\cite{ubbens2018use} used CNNs to perform leaf counting. They used rendered images of synthetic plants to augment \textit{Arabidopsis} rosette dataset and concluded that the augmentation with high-quality 3D synthetic plants improved the performance of leaf counting while real and synthetic plants could be interchangeably used for training a neural network. Pound \textit{et al.} \cite{pound2016deep} demonstrated wheat root and shoot feature identification and localisation using a shallow CNN architecture. The model had two convolutions followed by pooling layers. They found that the leaf tips represented the hardest classification problem compared to the leaf base due to the existing variations in orientation, size, shape and colour of tips in their dataset. They reported the discriminative performance of CNNs in classification and localisation tasks.
+
+This work examines the feasibility of using deep learning to estimate fruit number from 2D \textit{Arabidopsis} images acquired by flat bed scanning. In this study, we have developed a framework for \textit{Arabidopsis} silique detection that involves a deep neural network for patch-based classification and an object reconstructor for silique localisation and counting. The framework has been validated extensively on a dataset of 2408 images generated from biological experiments. This allowed the analysis of large numbers of plants inflorescences in an accurate and effective way providing a cost effective alternative to manual counting.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Data Acquisition}
+A set of 2,552 scanned images of mature inflorescences from different individuals were used to establish and test the CNN pipeline. A subset of this dataset (referred to as Set-1 = 144 images) was randomly selected for manual annotation and then used to train a shallow and a deep convolutionary neural networks. A total of 2,408 images (referred to as Set-2) were used to test the performance of the selected model. The mature inflorescence or stem of each plant, with attached fruits, was imaged in a flatbed scanner (Plustek, OpticPro A320) at 300 dpi and stored in .PNG format. A sample image is shown in Figure \ref{silique}. Manual counting of fruits from all images was done by a single person. 
+\begin{figure*}[!ht]
+	\centering		\includegraphics[width=0.8\textwidth]{images/Figure_1P.png}
+	\caption{Example image and features used for classifier annotation.}
+	\label{silique}
+\end{figure*}
+\section{Patch-based Classification}\label{patchclasiffication}
+\subsection{Data Preparation for Model Development}
+\subsubsection{Data Annotation}
+A graphical user interface (GUI) was designed to assist with manual annotation of different parts of the inflorescence. Figure \ref{gui} shows the schematic of this GUI. Set-1 was used in this GUI for manual annotation and the subsequent patch based classification models (see Section  Patch Based Classification Problem). The user selects the class type (tip, base, body of the silique and stem) and clicks on the respective parts on each input image. The annotated parts (points clicked) were saved as defined locations based on image coordinates. A sample annotated image illustrating the defined parts of the silique (tip, base, body and stem) is shown in Figure \ref{sample}. Important advantages of this annotation platform include its relatively low cost and ease of use. Compared to other annotation approaches that require detailed segmentation or polygons or boundary boxes, our GUI requires annotation of just four main structural elements. Using this platform, Set-1 was manually annotated by a single person in 36 hours.  Table \ref{stats} shows the number of annotations performed per class (before augmentation) using this GUI. This dataset was used in the initial training step for classifying whole inflorescence into defined parts. In order to prepare patches for our patch based classification problem, Set-1 was randomly split into training, validation and test sets as 65\%, 20\% and 15\% of the 144 images.  
+\begin{figure*}[!ht]
+	\centering		\includegraphics[width=0.8\textwidth]{images/gui.jpg}
+	\caption{Developed GUI used for manually annotating plant parts.}
+	\label{gui}
+\end{figure*}
+\begin{figure*}[!ht]
+\centering
+\begin{subfigure}[]{1\textwidth}
+	\includegraphics[width=\textwidth]{images/Example1.png}
+\end{subfigure}
+	\caption{Example annotated images (from left to right) for tip, base, body and stem.}
+	\label{sample}
+\end{figure*}
+\subsubsection{Patch Generation \& Augmentation}
+Using the annotated data to prepare training samples, square patches were extracted while being centralised around the manually annotated points. Subsequently, data augmentation \cite{zhang2016understanding, hamidinekoo2017investigating} was performed   to maximise  the amount of training data via specific transformations as well as to consider different frames compared to the centralised ones. To achieve this augmentation, five random rotations were done. The patches of size $50\times50$ were primarily extracted. Then, random $32\times32$ pixel crops followed by random mirroring were performed. For pre-processing, we normalised the data using the channel means and standard deviations.
+For validation samples, no augmentation was undertaken and the patches around annotated points were extracted. 
+Figure~\ref{patches} shows various examples of each class that were used in the training procedure. 
+\begin{figure*}[!ht]
+\centering
+\includegraphics[width=\textwidth]{images/samples.png}
+\caption{Example extracted patches using annotations. From top to bottom: samples of base, body, stem and tip, respectively.}
+\label{patches}
+\end{figure*}  
+\begin{table}
+\centering
+    \caption{Dataset annotation results performed on Set-1.}
+    \begin{tabular}{c c c }
+        \hline
+        Feature & Number of manual annotations \\ [0.5ex] 
+        \hline
+        Silique Tip & 7299 \\ 
+        Silique Base & 8058 \\
+        Silique Body & 11187 \\
+        Stem  & 10266 \\ 
+        \hline
+    \end{tabular}
+    \label{stats}
+\end{table}
+
+\subsection{Data Preparation for Testing}
+In order to enable the model to  properly distinguish the class type, the difference between samples used during training and samples during testing was minimised. In the learning process, the conditional distribution of the outputs $(y)$, given the inputs $(x)$ was inferred as P(y$|$X=x). Significant differences between the training and testing samples could result in ``covariate shift'', which could lead to $P(x)$ changes between training and testing samples and ``dataset shift'', which could result in a different joint distribution of outputs and inputs. To address this issue, we have centralised training patches around annotated points followed by augmentation, as described earlier. 
+
+To prepare  test samples, the difference between the distribution of testing data and that of the training and validation samples (that were used during training time) was taken into account. 
+In order to minimise  covariate  and dataset shifts,  firstly,  whole images were tiled into $32\times32$ patches with $50\%$ overlap. The idea behind selecting overlapping regions was to (1) increase the number of patches by four times compared to without overlapping and hence increase the chance of observing plant parts; (2) improve statistical  modelling the samples; and (3) disregarding ambiguous examples. Secondly, using a simple thresholding, patches belonging to the white background (lacking plant pixels) were excluded. Based on our experiments, these approaches improved the better classification results for test samples. The resultant patches were fed to the trained networks  and the classification outcomes for each sample patch (tip, base, stem, body) were reported. 
+
+\subsection{Patch Based Classification Problem}
+
+\subsubsection{Network Architecture}
+\label{architecture}
+Convolutional Neural Networks (CNNs) have become the dominant type of models for image classification~\cite{lecun2010convolutional}. Different architectures have been derived from the traditional feed-forward ANN, which consists of a cascade of trainable layers. Each layer contains sets of arrays called feature maps that in a specific layer, represents particular features extracted at the locations of the associated input.
+Various layers are currently proposed and used in deep neural  networks~\cite{lecun2015deep,krizhevsky2012imagenet}. 
+When an architecture is built using these elements, a signal, defined as the linear combination of the input, weights and biases treated under a non-linear function, is propagated through active neurons from layer to layer. In the forward direction (inference) the loss function is calculated and in the backward direction, calculated error between the actual and the predicted values is optimised. So, coefficients of all filters in all distinct layers are calculated and updated in an iterative process until the model converges~\cite{lecun2015deep}. 
+
+Among the well-known CNNs, we have focused on a shallow model (LeNet~\cite{lecun2015deep}) and a deep network (DenseNet~\cite{huang2017densely}). A comparative study was conducted with regard to the generalisation ability of these models to various unseen images (Set-1: testing set) for the defined classification task. 
+LeNet is a pioneering convolutional network that was proposed to classify digits~\cite{lecun2015deep}. On the other hand, DenseNet is a model notable for its key characteristic of bypassing signals from  preceding layers to  subsequent layers that enforce optimal information flow in the form of feature maps.
+LeNet architecture \cite{lecun1998gradient}, is a set of three convolutional layers stacked on top of each other, followed by two fully connected layers and finally ending with a Softmax layer. This model is shown in Figure~\ref{model1}.
+
+Among  DenseNet variants~\cite{huang2017densely}, DenseNet-Basic is a successful model proposed for the CIFAR10~\cite{krizhevsky2009learning} classification challenge. Hereafter, DenseNet-Basic will be referred to as ``DenseNet''. 
+The  DenseNet  used  in  our  experiments was   made up of a total  of $L$ layers, while each layer was responsible for  implementing a specific non-linear transformation. This transformation could be a composite function of different  operations  such as Batch Normalisation, rectified linear units, Pooling and Convolution~\cite{lecun2015deep, huang2017densely}. In this model, direct connections from any layer to all subsequent layers were incorporated to enable the $l^{th}$ layer to receive the feature-maps of all preceding layers.
+To facilitate down-sampling, as an essential part of a convolutional networks, the network was divided into multiple densely connected blocks (dense-blocks), which were connected to each other through transition layers (composed of a batch normalisation layer, a 1$\times$1 convolutional layer, dropout  layer and a 2$\times$2 average pooling layer). DenseNet's growth rate ($k$) is a new parameter of the network defined for generating narrower layers and was set to 12 to specifically refer to the Basic-DenseNet structure (i.e.  3 dense-blocks with equal number of layers and 2 transition layers).  We selected a small value for the network's growth rate as a relatively small growth rate was found to be sufficient to obtain satisfying results on our targeted datasets.
+The initial convolution layer  incorporates  16 convolutions of size 3$\times$3 on  the  input  images. The number of feature-maps in all other layers follow the setting for $k$. Each dense-block consists of $k$ repetition of a sequence of sub-layers as shown in Figure~\ref{model2}. Each layer takes all preceding feature-maps as input. At the end of the last dense block (3rd dense-block), a global average pooling was performed  to minimize over-fitting by reducing the total number of parameters in the model. The final Softmax classifier was aimed at making a decision based on the created features in the network. The rest of the model's parameters with regards to the kernel, stride and padding sizes were kept as default as detailed in~\cite{huang2017densely}. 
+
+\begin{figure*}[!ht]
+\centering
+\includegraphics[width=\textwidth]{images/LeNet.jpeg}
+\caption{LeNet architecture.}
+\label{model1}
+\end{figure*} 
+\begin{figure*}[!ht]
+\centering
+\includegraphics[width=\textwidth]{images/networkmodel.jpeg}
+\caption{Basic-DenseNet architecture. The feature-map sizes  in  the  three  dense-blocks  were  $32\times32$,  $16\times16$,  and $8\times8$, respectively,  with  configuration $L=100, k=12$.}
+\label{model2}
+\end{figure*} 
+
+\subsubsection{Hyper-parameters}
+The model-training task was a classification problem, where the input was pre-detected patches containing region of interest of the plants and the output was a label $\{0, 1, 2, 3\}$ indicating base, body, stem and tip, respectively. For a single example in the training set, the weighted loss, computed by summation of all entries, was optimised over the network. The  output was the predicted class probability of the sample patch belonging to each class. The objective of training was to minimise the difference  error  between the  network  prediction and the expected output. This error  was then flowed backwards through the network using the back-propagation  procedure \cite{lecun2015deep}   updating the network parameter values. 
+In our experiments with LeNet and DenseNet, considering specifications proposed by \citet{huang2017densely}, both models were trained via a stochastic gradient descent solver with the parameters set to Gamma = 0.1,  momentum = 0.9 and weight-decay = 10$^{-5}$. We trained LeNet and DenseNet with mini-batches of size 64 and 8 (according to our hardware specifications), respectively. Both models were trained using an initial learning rate of 0.001 with 33\% step down policy. LeNet was trained for 15 epochs and DenseNet was trained for 30 epochs. In our implementations, the CIFAR10 dataset~\cite{krizhevsky2009learning} was used for the initial training of  LeNet and  DenseNet, whilst the networks were fine-tuned using prepared training data from the plant dataset.  In the pre-processing step for each model, the image mean was also subtracted. 
+
+\begin{table}
+	\centering
+	\caption{Classification results on the validation samples.}
+	\begin{tabular}{c c c }
+		\hline
+		 & LeNet & DenseNet \\ [0.5ex] 
+		\hline
+		Accuracy & 80.55 & 86.80  \\ 
+		Loss & 0.64 & 0.37 \\
+		\hline
+	\end{tabular}
+	\label{tr}
+\end{table}
+
+\subsubsection{Performance of Patch Based Classifier}
+The final layer in each model had four outputs equalling the total number of classes: body, stem, tip and base with labels 0, 1, 2 and 3, respectively. Table~\ref{tr} shows the classification accuracy and error for both networks on the validation samples selected from Set-1.
+
+\section{Post-processing for Silique Localisation \& Counting}
+\subsection{Image Reconstruction}
+Appropriate post processing was applied to detect  probable silique appearances. In the post-processing analysis, the classified patches were arranged  so as to reconstruct the image and perform labelling into four defined classes (base, body, stem and tip). 
+Considering the scheme of overlapping samples and the generated classification probability, the patch was regarded as four equal squares (16$\times$16), called sub-patches. For each sub-patch there were four classes, the final decision was inferred through majority voting between these classes and the label for each pixel in the sub-patch was determined accordingly. In  uncertain cases, where the results of two classes were equal after applying majority voting, the average probability of those classes were assigned to these unlabelled pixels. The plant images were captured in RGB domain, and the background was white. Thus, the separation of the plant area from background was achieved via a simple threshold that removed background pixels during labelling.
+
+\subsection{Silique Counting}
+To count  potential siliques in the reconstructed image, a silique was defined as an area composed of three interconnected parts: one tip, one body and one base in such a way that the body was located between the tip and the base (Figure~\ref{silique}). To this end, those areas where tips and bodies presented joint borders were found. Then, each new area was evaluated for a probable connection between the located tip and a base. If a joint border existed, a silique area was constituted.
+In practice, many touching or overlapping siliques were observed in the captured images, which was a problem for detecting individual siliques accurately. In these cases, the angle between overlaid siliques was calculated, using a cross product (which is a scalar representation of two vectors, used to find the angle between two vectors). For example, for the case of two siliques overlaying (often with the same base or tip), the centers of tips and bases were computed; then using a cross product, the centers were connected together in order to calculate the angle between overlaid siliques. If the measured angle was larger than a predetermined threshold, then the region was considered as two distinctive siliques; otherwise, it was considered as a single silique. The value of this predetermined threshold depended on the resolution of the captured images.
+After conducting this post-processing step, the total number of siliques in the whole \textit{Arabidopsis} image was investigated, counted and reported.
+\subsection{The Performance of Silique Counting}
+
+\subsubsection{Results on the first test dataset}\label{part1}
+In the initial evaluation, we used Set-1: testing samples to evaluate the classification and detection performance of the utilised shallow and deep networks. The aim of this comparative evaluation was to choose the best model for correct classification of patches and estimating silique counts on a smaller dataset.
+The classification results of both networks were calculated in terms of a confusion matrix, per-class accuracy and total classification accuracy and are presented in Tables~\ref{results_lenet} and~\ref{results_densenet}. The DenseNet network showed  higher representational capacity to learn plant parts as compared to the LeNet network. The reason was that in the DenseNet network, each layer was able to take all preceding feature-maps as input, which allowed features to be re-used throughout the network during training. Consequently, this network was able to learn more compact and accurate representations. 
+After conducting the classification, the patches were re-organised to make the whole image and then they were visualised. 
+Figure~\ref{reconst} shows the results of labelling several randomly selected plant images after patch classification (using the DenseNet network) and image reconstruction. A colour was defined for each patch belonging to a specific class and applying a simple Otsu thresholding approach~\cite{sahoo1988survey}, the detected part of the plant in the patch was coloured.
+\begin{figure*}[!ht]
+\centering
+	\includegraphics[width=\textwidth]{images/results/img.png}
+\caption{Results of labelling on different reconstructed plant images using DenseNet. Red, green, blue and white represent tip, body, base and stem, respectively.}
+\label{reconst}
+\end{figure*}
+Having classification results, followed by reconstructing the original images, post-processing was performed for silique localisation. Subsequently, individual and overlapping siliques were detected and counted.
+Table~\ref{results} shows various error rates of the two trained networks for predicting the silique counts.  
+In this table, the correlation coefficient (that gives the relationship between two variables) shows that the  linear relationship between the estimated values and the respective annotations by the deeper model (DenseNet) is better and more significant than the shallower model (LeNet) by 2.2\%. This linear correlation can be better visualised in Figure~\ref{scatter} as scatter plots of the actual vs predicted silique counts. Considering Figures~\ref{reconst} and \ref{scatter}, it can visually and numerically be inferred that  DenseNet presents a more linear correlation (positive correlation) between the actual and the predicted values, whereas the positive correlation for  LeNet is less strong.
+Figure~\ref{hist} shows the histograms of errors (actual $-$ prediction) and  using the two described models based on a shallow and a deep convolutional neural network. Based on these histograms, DenseNet based model showed under-estimation of [-5-0) and over-estimation of (0-52] with regads to the silique counts while  LeNet showed more variation in the extent of over-estimation (ranging between 0-90).
+
+\begin{table}
+\centering
+    \caption{Confusion matrix for base, body, stem and tip prediction on the first groups of testing images using LeNet network.}
+    \begin{tabular}{c|c c c c c}
+	 &  Base &Body&Stem&Tip&Per-class accuracy\\\hline
+Base &  344 &	12 &	52 &	4 &	83.5\%\\
+Body &	15 &	280 &	26 	&30 & 79.77\%\\
+Stem &	14 	&29 &	270 &	4 &	85.17\%\\
+Tip  &	91 &	31& 	8 &	169 &	56.52\%\\\hline
+\multicolumn{6}{c}{Accuracy = 77.08 \%} \\ \hline  
+\end{tabular}
+    \label{results_lenet}
+\end{table}
+\begin{table}
+\centering
+    \caption{Confusion matrix for base, body, stem and tip prediction on the first groups of testing images using DenseNet network.}
+    \begin{tabular}{c|c c c c c}
+	 &  Base &Body&Stem&Tip&Per-class accuracy\\\hline
+Base &  392 &  4   &  14  &	 2    &   95.15\%\\
+Body &	15  &  290 &  13  &  33   &  82.62\%\\
+Stem &	11  &  14  &  290 &  2    &  91.48\%\\
+Tip  &	1   &  3   &  0   &  295  &  98.66\%\\\hline
+\multicolumn{6}{c}{Accuracy = 91.88 \%} \\ \hline  
+\end{tabular}
+    \label{results_densenet}
+\end{table}
+\begin{table*}
+\centering
+    \caption{Error rates for the silique count prediction on the first groups of testing images.}
+    \begin{tabular}{c c c }
+        \hline
+        Criteria & LeNet & DenseNet \\ \hline
+        Correlation coefficient & 0.932 & 0.954  \\ 
+        Mean absolute error & 414.42 & 155.08 \\
+        Root mean squared error & 20.35 & 12.45 \\
+        Relative absolute error  & 40.71 & 25.38 \\ 
+        \hline
+        Total number of whole  \textit{Arabidopsis thaliana} images & \multicolumn{2}{c}{22} \\ \hline
+    \end{tabular}
+    \label{results}
+\end{table*}
+\begin{figure*}[!ht]
+	\centering
+	\includegraphics[width=0.7\textwidth]{images/fig8.png}
+	\caption{Predicted counts using the two models using validation and testing samples. $R^2 = 0.90$ for the LeNet-based model and $R^2 = 0.95$ for the DenseNet-based model.}
+	\label{scatter}
+\end{figure*}
+\begin{figure*}[!ht]
+	\centering
+	\begin{subfigure}[]{.48\textwidth}
+		\includegraphics[width=.9\textwidth]{images/fig9_a.png}\subcaption{Actual $-$ LeNet-based-Prediction}
+	\end{subfigure}
+	\begin{subfigure}[]{.458\textwidth}
+		\includegraphics[width=.9\textwidth]{images/fig9_b.png}\subcaption{Actual $-$ DenseNet-based-Prediction}
+	\end{subfigure}	
+\caption{Histogram of error counts for the shallow and deep  models.}
+	\label{hist}
+\end{figure*}
+
+Based on our empirical observations and the provided error criteria, DenseNet network therefore performed better with regard to detecting various parts of the plant (tip, base, body and stem). Comparing a shallow and a deep network for classifying image patches, we concluded that the classification results and the quality of the count estimation showed improvement from using the deeper architecture. 
+Therefore,  DenseNet was suggested to be used for identifying siliques, because it showed more robustness to variations in shape and size. This is probably in part a consequence of using a training set of images from diverse genotypes harvested at different stages of silique maturation. Having developed a robust pipeline, we used  DenseNet to count siliques on the whole images on a larger test dataset of 2,408 images.
+
+\subsubsection{Results on the second testing dataset}\label{part2}
+To estimate silique numbers in a larger test dataset and evaluate the performance and robustness of the model, we used a further dataset of 2,408 images. 
+Figure~\ref{large} shows two different plots comparing the  manual counts with the DenseNet predicted silique counts for the second dataset. The scatter plot shows a high positive correlation ($R^2$ = 0.90) between manually counted vs predicted silique counts. A recent computer vision approach to measure growth dynamics and fruit number consisted of skeletonization of the images with cross-validation and linear regression models,  resulted in similar correlations ($R^2$ = 0.91) between observed and predicted values on 100 individuals  \cite{vasseur2018image}. The bar plot, shown in Figure~\ref{large}, represents the error trend of this pipeline, considering that this model did under-estimation. The reason was that small patches were used in the training sample and the model did  not properly learn the specific shapes. The model was able to recognise standard shapes (as defined in Figure~\ref{silique} and shown in Figure~\ref{reconst}) but was not able to predict small or multiple overlapping siliques. Some examples of the overall performance of our proposed pipeline are shown in Figure~\ref{finalperformance}. As can be seen, the model is still struggling to differentiate individual siliques when overlapping condition. 
+\begin{figure}[!ht]
+	\centering
+		\includegraphics[width=.5\textwidth]{images/figure_10_a.png}
+\caption{Predicted silique count and manual counting from Set-2 testing samples including 2,408 images. $R^2 = 0.90$}
+	\label{large}
+\end{figure}
+\begin{figure}[!ht]
+	\centering
+	\begin{subfigure}[]{.5\textwidth}
+		\includegraphics[width=\textwidth]{images/good1.png}\subcaption{predicted count = 27, actual count = 32}
+	\end{subfigure}
+	\begin{subfigure}[]{.5\textwidth}
+		\includegraphics[width=\textwidth]{images/good2.png}\subcaption{predicted count = 78, actual count = 92}
+	\end{subfigure}	
+	\begin{subfigure}[]{.5\textwidth}
+		\includegraphics[width=\textwidth]{images/good3.png}\subcaption{predicted count = 40, actual count = 52}
+	\end{subfigure}	
+\caption{Output of the DenseNet   applied to some random samples from the larger testing dataset. From left to right: original plant image, classification result, siliques detection and count result.}
+	\label{finalperformance}
+\end{figure}
+
+\section{Software and Library}
+The Deep Phenotyping  platform (DeepPod) is available at \url{https://github.com/AzmHmd/DeepPod} to accelerate the use of deep learning in  various plant phenotyping problems. The open source platform includes the pre-processing and augmentation scheme, weights of the trained models, model scripts, post-processing approach and evaluation process accompanied with some testing samples. The platform also provides access to annotation interface, the codes written in MATLAB for annotation GUI, preparing the training/validation samples, post-processing  and evaluation metrics. All classification implementations were performed within the Caffe framework~\cite{jia2014caffe}. The trained model weights from the Caffe library and the visualisation facility of NVIDIA-DIGITS were also utilised. Moreover, the computations were carried out using a NVIDIA GeForce GTX 1080 GPU on Intel Core i7-4790 Processor with Ubuntu 16.04 operating system. Trained models,  network architectures and optimisation code scripts for classification are discussed, as well as detailed documentation describing usage of the platform are available in the software repository. All images used in this study are available at {\color{red}XXX}.
+
+\section{Discussion}
+
+Based on our experimental and quantitative results on the first and the second testing samples corresponding to small and large test sets, we concluded that both CNN networks (LeNet and DenseNet) were capable of learning representations of the training data. Various error criteria presented in this study, justified the better performance of the deeper model (DenseNet) for classifying plant traits. Our proposed silique counting framework involved a different approach from others with regards to detection methodology through classification of plant parts (tip, body, base and stem) and  appropriate post-processing. We expect it to be useful for species with similar fruit morphology such as Canola (Oilseed Rape) and other brassicas. However, the CNN will most likely need to be fine-tuned for diverse silique morphology and imaging conditions. 
+There are several promising directions for future work for which the developed software can be improved such as the detection of other traits like silique length or branch number. These two traits had been reported to be a good proxi of seed number and therefore could be important for estimating productivity~\cite{bac2015genomeb}. The following considerations should be taken into account in future to improve the classification and detection performance: 
+\begin{enumerate}
+    \item The robustness of the representations in both networks  relied largely on the quality and quantity of the training and test data. Increased variety in the training samples (along with artificial augmentation) should provide more robust learned representations.
+    \item Deep learning methods can be applied directly on the whole image or can be implemented  on patch-based method. In this study, the patch-based fashion was used for training and a sliding window approach for testing. However, feeding each patch to the network was time-consuming and the patch overlap produces substantial redundancy. To overcome these issues, training on the whole images can be suggested.
+    \item Generative adversarial networks (GANs)~\cite{goodfellow2014generative} have been widely used in segmentation problems on real world~\cite{isola2017image,luc2016semantic} and medical data (see our recent application of these models on medical images~\cite{hamidinekoo2018deep,grall2019using}). In order to avoid the need for post-processing (which affects the performance), different types of GANs can be investigated.
+    \item In order to provide more annotated images for further research, the output of the proposed DenseNet base model can be used to decrease the tediousness of annotating images. Therefore, the user can correct false negatives (by adding missed siliques) and false positives (or removing falsely detected ones) instead of spending so much time on marking each fruit contour individually. 
+\end{enumerate}
+
+Therefore this study provides: 
+\begin{itemize}
+    \item A cost efficient approach of annotating  images of fruiting inflorescences.
+    \item A supervised classification model based on a deep convolutional network to undertake a four class (tip, body, base and stem) classification.
+    \item A pipeline to detect and count siliques numbers. 
+    \item A pipeline to visualise the output of silique detection to be used for future annotation tasks and significantly decrease the time and costs needed to do a huge number of annotations for more powerful and efficient deep learning based models.
+\end{itemize}   
+
+\section{Conclusions}
+As a model plant, \textit{Arabidopsis} is invaluable to identify new gene-traits associations. Measuring  traits, such as silique number, is time consuming  when dealing with the large populations  commonly required for genetic analysis. In this study we proposed a supervised pipeline for detecting and counting siliques from easily acquired images. For this aim, a GUI was firstly designed to provide proper annotated images. 
+Then, we used a shallow and a deep convolutional network to classify \textit{Arabidopsis} inflorescence images into its four main structural elements (tip, body, base and stem). A comparative study of these two networks was done using a smaller set of testing samples. Evaluation metrics indicated the deeper DenseNet provided better model performance and this pipeline is released as an open-source package, with the goal of promoting the use of deep learning within the plant phenotyping community instead of or to complement manual analysis. We hope that these tools continue to be improved and become friendly use for researchers. A more accurate and flexible approach will be useful for high-throughput phenotyping of large populations and further use in the study of complex traits. 
+
+\section{Availability of source code and requirements} 
+
+\begin{itemize}
+\item Project name: DeepPod
+\item Project home page: \url{https://github.com/AzmHmd/DeepPod.git}
+\item Operating system(s): Platform independent
+\item Programming language: MATLAB, Python
+\item Other requirements:  CUDA version: 8.0, CuDNN version: v5.1, BLAS: atlas, CAFFE version: 1.0.0-rc3, DIGITS version: 5.1-dev, Python version: 2.7
+\item License: CAFFE available at \url{https://www.nvidia.co.uk/object/caffe-installation-uk.html}
+and DIGITS available at \url{https://docs.nvidia.com/deeplearning/digits/digits-installation/index.html}
+\end{itemize}
+
+\section{Availability of supporting data and materials}
+
+\textit{GigaScience} requires authors to deposit the data set(s) supporting the results reported in submitted manuscripts in a publicly-accessible data repository such as \href{http://gigadb.org/}{\textit{Giga}DB} (see \textit{Giga}DB database terms of use for complete details). This section should be included when supporting data are available and must include the name of the repository and the permanent identifier or accession number and persistent hyperlinks for the data sets (if appropriate). The following format is recommended:
+
+``The data set(s) supporting the results of this article is(are) available in the [repository name] repository, [cite unique persistent identifier].''
+
+Following the \href{https://www.force11.org/group/joint-declaration-data-citation-principles-final}{Joint Declaration of Data Citation Principles}, where appropriate we ask that the data sets be cited where it is first mentioned in the manuscript, and included in the reference list. If a DOI has been issued to a dataset please always cite it using the DOI rather than the less stable URL the DOI resolves to (e.g.~\url{http://dx.doi.org/10.5524/100044} rather than \url{http://gigadb.org/dataset/100044}). For more see:
+
+Data Citation Synthesis Group: Joint Declaration of Data Citation Principles. Martone M. (ed.) San Diego CA: FORCE11; 2014 [\url{https://www.force11.org/datacitation}]
+
+A list of available scientific research data repositories can be found in \href{http://www.re3data.org/}{res3data} and \href{https://biosharing.org/}{BioSharing}.
+
+\section{Declarations}
+
+\subsection{List of abbreviations}
+\noindent 
+\begin{tabular}{@{}ll}
+GUI & Graphical User Interface \\
+ANN & Artificial Neural Network\\
+CNN & Convolutional Neural Network\\
+CNN-LSTM & Convolutional Neural Networks and Long-Short \\ 
+& Term Memories\\
+\end{tabular}
+
+\subsection{Consent for publication}
+Not applicable
+
+\subsection{Competing Interests}
+The authors declare that they have no competing interests
+
+\subsection{Author's Contributions}
+J.D., F.C. and C.L designed the study and provided the images. G.G.-M. performed manual counting and manual annotations. A.H. developed the annotation toolbox, performed the deep learning and data analysis, testing and evaluation tasks. A.H. and M.G. carried out the post processing analysis. AH and G.G.-M. drafted the manuscript. All the authors provided comments and corrected the manuscript.
+
+\section{Acknowledgements}
+The authors would like to gratefully acknowledge Sandy Spence and Alun Jones for their support and maintenance of the GPU and the systems used for this research. We also acknowledge the team of the National Plant Phenomics Centre for the image dataset, mainly to Lina Avila Clasen for her help in acquiring the images and manual counting. GG-M acknowledges receipt of a AberDoc scholarship from Aberystwyth University; JHD and CL funding from BBSRC (grants BB/CAP1730/1 and BB/P003095/1).
+
+
+%% Specify your .bib file name here, without the extension
+\bibliography{references}
+
+\end{document}
